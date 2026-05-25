@@ -44,9 +44,13 @@ $ cp -av ~/qnx-work/rpi-firmware/boot/*.elf . 2>/dev/null || true
 $ cp -av ~/qnx-work/rpi-firmware/boot/*.dat . 2>/dev/null || true
 $ cp -av ~/qnx-work/rpi-firmware/boot/*.bin . 2>/dev/null || true
 $ cat > ~/qnx-work/rpi5-boot/config.txt <<'EOF'
-[rpi5]
+[all]
+arm_64bit=1
 enable_uart=1
 force_turbo=1
+gpu_mem=512
+dtoverlay=vc4-kms-v3d-pi5
+dtparam=pciex1
 kernel=ifs-rpi5.bin
 EOF
 $ cp -av ~/qnx-work/bsp/images/ifs-rpi5.bin ~/qnx-work/rpi5-boot/
@@ -66,7 +70,7 @@ $ cd ~/qt-qnx/qt-src
 $ cmake -S qtbase-everywhere-src-6.10.3 -B ../build-host -GNinja \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DQT_BUILD_EXAMPLES=OFF -DQT_BUILD_TESTS=OFF \
-        -DCMAKE_INSTALL_PREFIX=$HOME/qt-host \
+        -DCMAKE_INSTALL_PREFIX=$HOME/qt-qnx/qt-host \
 $ cd ../build-host
 $ cmake --build . -j$(nproc)
 $ cmake --install
@@ -80,23 +84,24 @@ $ cmake --build . -j$(nproc)
 $ cmake --install .
 #### Qt QNX
 $ source ~/qnx800/qnxsdp-env.sh
-$ cd ~/qt-qnx/build-qnx
-  ../src/configure \
-    -release \
-    -nomake tests \
-    -nomake examples \
-    -qt-host-path ~/qt-qnx/build-host \
-    -extprefix ~/qt-qnx/install-qnx \
-    -prefix /qt \
-    -skip qtwebengine \
-    -skip qtmultimedia \
-    -skip qtspeech \
-    -skip qtremoteobjects \
-    -skip qtinterfaceframework \
-    -- \
-    -DCMAKE_TOOLCHAIN_FILE=~/qt-qnx/qnx-aarch64le.cmake \
-    -DCMAKE_SYSTEM_VERSION=800
-  
-    cmake --build . --parallel 4
-    cmake --install .
+$ cmake -S qtbase-everywhere-src-6.10.3 -B ../build-qnx -G Ninja \
+      -DCMAKE_TOOLCHAIN_FILE=$HOME/qt-qnx/qnx-aarch64le.cmake \
+      -DCMAKE_SYSTEM_VERSION=800 \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      -DQT_HOST_PATH=$HOME/qt-qnx/qt-host \
+      -DCMAKE_STAGING_PREFIX=$HOME/qt-qnx/qnx-install \
+      -DCMAKE_INSTALL_PREFIX=/fs/nvme/runtime \
+      -DQT_BUILD_EXAMPLES=OFF \
+      -DQT_BUILD_TESTS=OFF
+$ cd ../build-qnx
+$ cmake --build . -j$(nproc)
+$ cmake --install .
+$ cd ~/qt-qnx/qt-qnx-src/qtshadertools-everywhere-src-6.10.3
+$ ~/qt-qnx/qnx-install/bin/qt-configure-module .
+$ cmake --build . -j$(nproc)
+$ cmake --install .
+$ cd ~/qt-qnx/qt-qnx-src/qtdeclarative-everywhere-src-6.10.3
+$ ~/qt-qnx/qnx-install/bin/qt-configure-module .
+$ cmake --build . -j$(nproc)
+$ cmake --install .
 ```
