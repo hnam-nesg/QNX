@@ -51,3 +51,52 @@ kernel=ifs-rpi5.bin
 EOF
 $ cp -av ~/qnx-work/bsp/images/ifs-rpi5.bin ~/qnx-work/rpi5-boot/
 ```
+**Cross compilation of Qt6.10.3 for QNX**
+```
+$ mkdir -p ~/qt-qnx/downloads
+$ cd ~/qt-qnx/downloads
+$ wget -r -np -nd -A "qt*-everywhere-src-6.10.3.tar.xz" \
+    https://download.qt.io/official_releases/qt/6.10/6.10.3/submodules/
+$ mkdir -p ~/qt-qnx/qt-src
+$ cd ~/qt-qnx/downloads
+$ for f in qt*-everywhere-src-6.10.3.tar.xz; do
+    tar xf "$f" -C ~/qt-qnx/qt-src
+done
+$ cd ~/qt-qnx/qt-src
+$ cmake -S qtbase-everywhere-src-6.10.3 -B ../build-host -GNinja \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DQT_BUILD_EXAMPLES=OFF -DQT_BUILD_TESTS=OFF \
+        -DCMAKE_INSTALL_PREFIX=$HOME/qt-host \
+$ cd ../build-host
+$ cmake --build . -j$(nproc)
+$ cmake --install
+$ cd ~/qt-qnx/qt-src/qtshadertools-everywhere-src-6.10.3
+$ ~/qt-qnx/qt-host/bin/qt-configure-module .
+$ cmake --build . -j$(nproc)
+$ cmake --install .
+$ cd ~/qt-qnx/qt-src/qtdeclarative-everywhere-src-6.10.3
+$ ~/qt-qnx/qt-host/bin/qt-configure-module .
+$ cmake --build . -j$(nproc)
+$ cmake --install .
+#### Qt QNX
+$ source ~/qnx800/qnxsdp-env.sh
+$ cd ~/qt-qnx/build-qnx
+  ../src/configure \
+    -release \
+    -nomake tests \
+    -nomake examples \
+    -qt-host-path ~/qt-qnx/build-host \
+    -extprefix ~/qt-qnx/install-qnx \
+    -prefix /qt \
+    -skip qtwebengine \
+    -skip qtmultimedia \
+    -skip qtspeech \
+    -skip qtremoteobjects \
+    -skip qtinterfaceframework \
+    -- \
+    -DCMAKE_TOOLCHAIN_FILE=~/qt-qnx/qnx-aarch64le.cmake \
+    -DCMAKE_SYSTEM_VERSION=800
+  
+    cmake --build . --parallel 4
+    cmake --install .
+```
