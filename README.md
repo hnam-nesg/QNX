@@ -105,3 +105,23 @@ $ ~/qt-qnx/qnx-install/bin/qt-configure-module .
 $ cmake --build . -j$(nproc)
 $ cmake --install .
 ```
+**Partition the SSD for the Qt application**
+```
+$ sudo fdisk /dev/sdf
+$ o 
+$ n 
+$ p
+$ 1
+$ +32GB
+$ t
+$ c
+$ n
+$ p
+$ 2
+$ t
+$ 2
+$ b1
+$ w
+$ sudo partprobe /dev/sdf
+$ sudo mkfs.vfat -F 32 -n TRANSFER /dev/sdf1
+```
